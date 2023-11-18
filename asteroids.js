@@ -44,6 +44,28 @@ class Player {
   }
 }
 
+class Projectile {
+  constructor({ position, velocity }) {
+    this.position = position
+    this.velocity = velocity
+    this.radius = 5
+  }
+
+  draw() {
+    c.beginPath()
+    c.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2, false)
+    c.closePath()
+    c.fillStyle = 'white'
+    c.fill()
+  }
+
+  update () {
+    this.draw()
+    this.position.x += this.velocity.x
+    this.position.y += this.velocity.y
+  }
+}
+
 const player = new Player({
   position: {x: canvas.width / 2, y: canvas.height / 2},
   velocity: {x: 0, y: 0}
@@ -66,6 +88,10 @@ const keys = {
 const SPEED = 3;
 const ROTATIONAL_SPEED = 0.05;
 const FRICTION = 0.97
+// const PROJECTILE_SPEED = 3;
+const PROJECTILE_SPEED = 4;
+
+const projectiles = [];
 
 function animate() {
   window.requestAnimationFrame(animate);
@@ -75,6 +101,20 @@ function animate() {
   c.fillRect(0, 0, canvas.width, canvas.height);
   
   player.update();
+
+  for(let i = projectiles.length - 1; i >= 0; i--) {
+    const projectile =  projectiles[i];
+    projectile.update();
+
+    // if projectile is off screen, remove it from array
+    if (projectile.position.x + projectile.radius < 0
+      || projectile.position.x - projectile.radius > canvas.width
+      || projectile.position.y - projectile.radius > canvas.height
+      || projectile.position.y + projectile.radius < 0
+      ) {
+      projectiles.splice(i, 1);
+    }
+  }
   
 
   // player.velocity.x = 0;
@@ -111,6 +151,25 @@ window.addEventListener('keydown', event => {
       case 'KeyD':
         keys.d.pressed = true;
         break;
+      case 'Space':
+        projectiles.push(
+          new Projectile({
+
+            // make projectile start from end of ship
+            position: {
+              x: player.position.x + Math.cos(player.rotation) * 30, // same as moveTo offset in player.draw
+              y: player.position.y + Math.sin(player.rotation) * 30,
+            },
+
+            // make projectile shoot in direction opposite of ship
+            velocity: {
+              x: Math.cos(player.rotation) * PROJECTILE_SPEED,
+              y: Math.sin(player.rotation) * PROJECTILE_SPEED
+            }
+          })
+        );
+        console.log(projectiles)
+        break;
   }
   // console.log(event);
 });
@@ -127,5 +186,4 @@ window.addEventListener('keyup', event => {
         keys.d.pressed = false;
         break;
   }
-  // console.log(event);
 });
