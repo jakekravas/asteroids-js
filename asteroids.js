@@ -22,7 +22,8 @@ class Player {
 
     c.beginPath();
     c.arc(this.position.x, this.position.y, 5, 0, Math.PI * 2, false);
-    c.fillStyle = 'red';
+    // c.fillStyle = 'red';
+    c.fillStyle = 'cyan';
     c.fill()
     c.closePath();
 
@@ -117,6 +118,8 @@ const SPEED = 4;
 const ROTATIONAL_SPEED = 0.1;
 const FRICTION = 0.97
 const PROJECTILE_SPEED = 7;
+const ASTEROID_SPEED = 2;
+const ASTEROID_SPAWN_INTERVAL = 2000;
 
 const projectiles = [];
 const asteroids = [];
@@ -132,26 +135,26 @@ window.setInterval(() => {
     case 0: // left side of screen
       x = 0 - radius;
       y = Math.random() * canvas.height;
-      vx = 1;
+      vx = 4;
       vy = 0;
       break;
     case 1: // bottom of screen
       x = Math.random() * canvas.width;
       y = canvas.height + radius;
       vx = 0;
-      vy = -1;
+      vy = -4;
       break;
     case 2: // right side of screen
       x = canvas.width + radius;
       y = Math.random() * canvas.height;
-      vx = -1;
+      vx = -4;
       vy = 0;
       break;
     case 3: // top of screen
       x = Math.random() * canvas.width;
       y = 0 - radius;
       vx = 0;
-      vy = 1;
+      vy = 4;
       break;
 
   }
@@ -170,7 +173,25 @@ window.setInterval(() => {
   }));
 
   console.log(asteroids)
-}, 3000);
+}, ASTEROID_SPAWN_INTERVAL);
+
+
+// returns true/false of whether two circles are touching
+function circleCollision(circle1, circle2) {
+  const xDifference = circle2.position.x - circle1.position.x;
+  const yDifference = circle2.position.y - circle1.position.y;
+
+  // pythagorean theorem to get distance between centers of circle1 and circle2
+  const distance = Math.sqrt(xDifference * xDifference +  yDifference * yDifference);
+
+  // if distance <= sum of both radiuses, they must be touching
+  if (distance <= circle1.radius + circle2.radius) {
+    console.log('two have collided')
+    return true;
+  }
+
+  return false;
+}
 
 function animate() {
   window.requestAnimationFrame(animate);
@@ -208,6 +229,17 @@ function animate() {
       ) {
       asteroids.splice(i, 1);
     }
+
+    // for each asteroid, check every projectile and see if they're colliding
+    for(let j = projectiles.length - 1; j >= 0; j--) {
+          const projectile = projectiles[j];
+    
+          if (circleCollision(asteroid, projectile)) {
+            console.log('HIT')
+            asteroids.splice(i, 1);
+            projectiles.splice(j, 1);
+          }
+        }
 
   }
   
