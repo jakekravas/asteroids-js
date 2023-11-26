@@ -1,3 +1,27 @@
 body {
   margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
+
+h1 {
+  display: block;
+}
+
+#asteroids-container {
+  /* background-color: #333; */
+  background-color: #1f242d;
+  /* background-color: #323946; */
+  padding: 10px;
+  text-align: center;
+  /* display: flex; */
+  color: #fff;
+  /* justify-content: center; */
+}
+
+#score-zone {
+  /* width: 400px; */
+  /* text-align: left; */
+  margin: auto;
+}
+
+

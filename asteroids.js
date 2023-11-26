@@ -1,11 +1,15 @@
 const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d');
+let levelUpSound = new Audio('audio/level_up.m4a')
 let score = 0;
+let level = 1;
 
 // let shootSound = new Audio('audio/shoot.mp3');s
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+// canvas.width = window.innerWidth;
+// canvas.height = window.innerHeight;
+// canvas.width = document.getElementById('asteroids-container').width;
+// canvas.height = document.getElementById('asteroids-container').height;
 
 const gameOverSound = new Audio('audio/game-over.mp3')
 
@@ -171,16 +175,31 @@ const ROTATIONAL_SPEED = 0.1;
 const FRICTION = 0
 const PROJECTILE_SPEED = 7;
 // const ASTEROID_SPEED = 4;
-const ASTEROID_SPAWN_INTERVAL = 2000;
+let ASTEROID_SPAWN_INTERVAL = 1000;
 
-const projectiles = [];
-const asteroids = [];
+// const projectiles = [];
+// const asteroids = [];
+let projectiles = [];
+let asteroids = [];
+
+// let asteroidVelocity = 1;
+let asteroidVelocityLowerRange = 1;
+let asteroidVelocityUpperRange = 2;
 
 // spawn new asteroid every 3 seconds
 // window.setInterval(() => {
 const intervalId = window.setInterval(() => {
   const randomDirection = Math.floor(Math.random() * 4); // random # 0-3
-  const randomVelocity = Math.floor(Math.random() * 5) + 2; // random # 2-6
+
+  // if (score >= 2) {
+  //   asteroidVelocity = 6;
+  // } else {
+  //   asteroidVelocity = 2;
+  // }
+
+  // const asteroidVelocity = Math.floor(Math.random() * 5) + 2; // random # 2-6
+  const asteroidVelocity = Math.floor(Math.random() * (asteroidVelocityUpperRange - 1)) + asteroidVelocityLowerRange;
+
   let x, y;
   let vx, vy; //vel x, vel y
   let randomRadius = 50 * Math.random() + 10
@@ -190,26 +209,26 @@ const intervalId = window.setInterval(() => {
     case 0: // left side of screen
       x = 0 - randomRadius;
       y = Math.random() * canvas.height;
-      vx = randomVelocity;
+      vx = asteroidVelocity;
       vy = 0;
       break;
     case 1: // bottom of screen
       x = Math.random() * canvas.width;
       y = canvas.height + randomRadius;
       vx = 0;
-      vy = -randomVelocity;
+      vy = -asteroidVelocity;
       break;
     case 2: // right side of screen
       x = canvas.width + randomRadius;
       y = Math.random() * canvas.height;
-      vx = -randomVelocity;
+      vx = -asteroidVelocity;
       vy = 0;
       break;
     case 3: // top of screen
       x = Math.random() * canvas.width;
       y = 0 - randomRadius;
       vx = 0;
-      vy = randomVelocity;
+      vy = asteroidVelocity;
       break;
   }
 
@@ -225,6 +244,7 @@ const intervalId = window.setInterval(() => {
     // radius
     radius: randomRadius
   }));
+  console.log('NEW ASTEROID')
 
   // console.log(asteroids)
 }, ASTEROID_SPAWN_INTERVAL);
@@ -241,6 +261,23 @@ function circleCollision(circle1, circle2) {
   // if distance <= sum of both radiuses, they must be touching
   if (distance <= circle1.radius + circle2.radius) {
     console.log('two have collided')
+    let hitSound = new Audio('audio/hit.m4a')
+    hitSound.play()
+    score++;
+    document.getElementById('current-score').innerText = score;
+    // if (score == 2) {
+    if (score % 10 == 0) { // level up
+      console.log('CLEAR ASTEROIDS')
+      asteroids = [];
+      level++;
+      levelUpSound.play()
+      // asteroidVelocity++;
+      asteroidVelocityLowerRange++;
+      asteroidVelocityUpperRange++;
+      document.getElementById('level').innerText = level;
+      // clearInterval(intervalId)
+    }
+
     return true;
   }
 
@@ -357,10 +394,13 @@ window.addEventListener('keydown', event => {
 
   // move player's ship up/left/right
   if (event.code == 'KeyW' || event.code == 'ArrowUp') {
+    event.preventDefault() // prevent automatic scroll-down
     keys.w.pressed = true;
   } else if (event.code == 'KeyA' || event.code == 'ArrowLeft') {
+    event.preventDefault() // prevent automatic scroll-down
     keys.a.pressed = true;
   } else if (event.code == 'KeyD' || event.code == 'ArrowRight') {
+    event.preventDefault() // prevent automatic scroll-down
     keys.d.pressed = true;
   } else if (event.code == 'Space') {
     event.preventDefault() // prevent automatic scroll-down
