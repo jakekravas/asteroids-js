@@ -177,8 +177,7 @@ const projectiles = [];
 const asteroids = [];
 
 // spawn new asteroid every 3 seconds
-// window.setInterval(() => {
-const intervalId = window.setInterval(() => {
+window.setInterval(() => {
   const randomDirection = Math.floor(Math.random() * 4); // random # 0-3
   const randomVelocity = Math.floor(Math.random() * 5) + 2; // random # 2-6
   let x, y;
@@ -252,9 +251,14 @@ function circleCollision(circle1, circle2) {
 // }
 
 function animate() {
-  const animationId = window.requestAnimationFrame(animate);
+  // console.log(player.rotation)
+  // console.log(player.position.x)
+  // console.log(player.position.y)
+  window.requestAnimationFrame(animate);
+
   c.fillStyle = 'black';
-  c.fillRect(0, 0, canvas.width, canvas.height); // x, y, width, height
+  // x, y, width, height
+  c.fillRect(0, 0, canvas.width, canvas.height);
   
   player.update();
 
@@ -276,12 +280,11 @@ function animate() {
   for(let i = asteroids.length - 1; i >= 0; i--) {
     const asteroid =  asteroids[i];
     asteroid.update();
-    
 
     if (triangleCircleCollision(player.getVertices(), asteroid)) {
       console.log('GAME OVER')
-      window.cancelAnimationFrame(animationId)
-      clearInterval(intervalId)
+      // window.cancelAnimationFrame(animationId)
+      // clearInterval(intervalId)
     }
 
     // if projectile is off screen, remove it from array
@@ -363,7 +366,6 @@ window.addEventListener('keydown', event => {
   } else if (event.code == 'KeyD' || event.code == 'ArrowRight') {
     keys.d.pressed = true;
   } else if (event.code == 'Space') {
-    event.preventDefault() // prevent automatic scroll-down
     const shootSound = new Audio('audio/shoot.mp3');
     // const shootSound = new Audio('audio/shoott.m4a');
     shootSound.pause();
