@@ -75,16 +75,29 @@ button {
   margin: 0 auto;
 }
 
+#colors-header {
+  /* margin-top: 50px; */
+}
+
+#animations-header {
+  margin-top: 50px;
+}
+
+#audio-header {
+  margin-top: 50px;
+}
+
 .color-test {
   background-color: red !important;
 }
 
 .settings-input-group {
-  width: 26%;
+  width: 18%;
   display: flex;
   justify-content: space-between;
-  margin: 20px auto;
-  font-size: 18px;
+  /* margin: 18px auto; */
+  margin: 0px auto 16px auto;
+  /* font-size: 18px; */
 }
 
 
@@ -106,29 +119,3 @@ button {
 .text-center {
   text-align: center;
 }
-
-/* .slide-up {
-  display: block;
-  bottom: 0;
-} */
-
-/* .slide-up {
-  animation: slideUp 0.5s forwards;
-}
-
-.slide-down {
-  animation: slideDown 0.5s forwards;
-}
-
-@keyframes slideUp {
-  0% { bottom: -100%; opacity: 0; }
-  50% { bottom: 0; opacity: 1; }
-  100% { bottom: 0; opacity: 1; }
-}
-
-@keyframes slideDown {
-  0% { bottom: 0; opacity: 1; }
-  50% { bottom: 0; opacity: 1; }
-  100% { bottom: -100%; opacity: 0; }
-} */
-

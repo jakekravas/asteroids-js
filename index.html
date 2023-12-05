@@ -42,8 +42,10 @@
       <div id='settings'>
         <h2 class='text-center'>Settings</h2>
 
+        <h3 id='colors-header'>Colors</h3>
+
         <div class='settings-input-group'>
-          <label for='background-color'>Background color:</label>
+          <label for='background-color'>Background:</label>
           <select name='background-color' id='background-color' onchange='onSettingsChange()'>
             <option value='black'>Black</option>
             <option value='white'>White</option>
@@ -57,7 +59,7 @@
         </div>
         
         <div class='settings-input-group'>
-          <label for='ship-outer-color'>Ship outer color:</label>
+          <label for='ship-outer-color'>Ship outer:</label>
           <select name='ship-outer-color' id='ship-outer-color' onchange='onSettingsChange()'>
             <option value='black'>Black</option>
             <option value='white' selected>White</option>
@@ -71,7 +73,7 @@
         </div>
         
         <div class='settings-input-group'>
-          <label for='ship-inner-color'>Ship inner color:</label>
+          <label for='ship-inner-color'>Ship inner:</label>
           <select name='ship-inner-color' id='ship-inner-color' onchange='onSettingsChange()'>
             <option value='black'>Black</option>
             <option value='white'>White</option>
@@ -85,7 +87,7 @@
         </div>
 
         <div class='settings-input-group'>
-          <label for='projectile-color'>Projectile color:</label>
+          <label for='projectile-color'>Projectile:</label>
           <select name='projectile-color' id='projectile-color' onchange='onSettingsChange()'>
             <option value='black'>Black</option>
             <option value='white' selected>White</option>
@@ -99,7 +101,7 @@
         </div>
         
         <div class='settings-input-group'>
-          <label for='asteroid-color'>Asteroid color:</label>
+          <label for='asteroid-color'>Asteroid:</label>
           <select name='asteroid-color' id='asteroid-color' onchange='onSettingsChange()'>
             <option value='black'>Black</option>
             <option value='white' selected>White</option>
@@ -112,17 +114,29 @@
           </select>
         </div>
 
+        <h3 id='animations-header'>Animations</h3>
+
+        <div class='settings-input-group'>
+          <label for='enable-lvl-up-text-animation'>Enable level-up text:</label>
+          <input type='checkbox' id='enable-lvl-up-text-animation' name='enable-lvl-up-text-animation' checked onchange='onSettingsChange()'>
+        </div>
+
+        <div class='settings-input-group'>
+          <label for='enable-lvl-up-flash-animation'>Enable level-up flash:</label>
+          <input type='checkbox' id='enable-lvl-up-flash-animation' name='enable-lvl-up-flash-animation' checked onchange='onSettingsChange()'>
+        </div>
+
+        <h3 id='audio-header'>Audio</h3>
+
         <div class='settings-input-group'>
           <label for='enable-sound'>Enable sound:</label>
           <input type='checkbox' id='enable-sound' name='enable-sound' checked onchange='onSettingsChange()'>
         </div>
 
         <div class='settings-input-group'>
-          <label for='enable-lvl-up-animations'>Enable level-up animations:</label>
-          <input type='checkbox' id='enable-lvl-up-animations' name='enable-lvl-up-animations' checked onchange='onSettingsChange()'>
+          <label for='volume'>Volume:</label>
+          <input type='range' min='0' max='100' value='100' class='slider' id='volume' onchange='onSettingsChange()'>
         </div>
-
-
 
         <div class='text-center'>
           <button id='back-to-game-btn' onclick='displayGame()'>Back to game</button>

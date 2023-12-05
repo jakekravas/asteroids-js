@@ -21,8 +21,10 @@ let shipOuterColor = 'white';
 let shipInnerColor = 'cyan';
 let projectileColor = 'white';
 let asteroidColor = 'white';
+let lvlUpTextAnimation = true;
+let lvlUpFlashAnimation = true;
 let soundEnabled = true;
-let lvlUpAnimations = true;
+let volume = 1.0;
 
 const SPEED = 4;
 const ROTATIONAL_SPEED = 0.1;
@@ -178,8 +180,8 @@ function triangleCircleCollision(triangleVertices, circle) {
     // if distance <= sum of both radiuses, they must be touching
     // if (distance <= circle.radius) {
     if (distance < circle.radius) {
-      console.log('SHIP HAS BEEN HIT')
       if (soundEnabled) {
+        gameOverSound.volume = volume;
         gameOverSound.play();
       }
       return true;
@@ -245,7 +247,7 @@ const player = new Player({
   velocity: {x: 0, y: 0}
 });
 
-player.draw();
+// player.draw();
 
 const keys = {
   w: {
@@ -319,8 +321,6 @@ function spawnAsteroids() {
 }
 
 
-
-
 // returns true/false of whether two circles are touching
 function circleCollision(circle1, circle2) {
   const xDifference = circle2.position.x - circle1.position.x;
@@ -334,6 +334,7 @@ function circleCollision(circle1, circle2) {
 
     let hitSound = new Audio('audio/hit.m4a')
     if (soundEnabled) {
+      hitSound.volume = volume;
       hitSound.play()
     }
     score++;
@@ -350,10 +351,13 @@ function circleCollision(circle1, circle2) {
 }
 
 function handleLevelUp() {
+  // clear asteroids
   asteroids = [];
+  // increase level
   level++;
 
   if (soundEnabled) {
+    levelUpSound.volume = volume;
     levelUpSound.play()
   }
 
@@ -361,23 +365,30 @@ function handleLevelUp() {
   // asteroidVelocityLowerRange++;
   // asteroidVelocityUpperRange++;
 
+
+  // update text display of level counter
   document.getElementById('level').innerText = level;
 
-  let body = document.querySelector('body');
-  body.style.animation = 'flashAnimation 1s ease';
+  if (lvlUpFlashAnimation) {
+    let body = document.querySelector('body');
+    body.style.animation = 'flashAnimation 1s ease';
+  
+    // Remove the animation property after it's complete
+    setTimeout(function() {
+      body.style.animation = '';
+    }, 1000);
+  }
 
-  // Remove the animation property after it's complete
-  setTimeout(function() {
-    body.style.animation = '';
-  }, 1000);
+  if (lvlUpTextAnimation) {
+    let gif = document.getElementById('level-up-gif');
+    gif.style.marginBottom = '0';
+  
+    // Remove the animation property after it's complete
+    setTimeout(function() {
+      gif.style.marginBottom = '-80px';
+    }, 2000);
+  }
 
-  let gif = document.getElementById('level-up-gif');
-  gif.style.marginBottom = '0';
-
-  // Remove the animation property after it's complete
-  setTimeout(function() {
-    gif.style.marginBottom = '-80px';
-  }, 2000);
 }
 
 let animationId;
@@ -501,6 +512,7 @@ window.addEventListener('keydown', event => {
     } else if (event.code == 'Space') {
       event.preventDefault() // prevent automatic scroll-down
       const shootSound = new Audio('audio/shoot.mp3');
+      // shootSound.volume = 1.0
       // const shootSound = new Audio('audio/shoott.m4a');
       shootSound.pause();
   
@@ -516,6 +528,7 @@ window.addEventListener('keydown', event => {
       }));
   
       if (soundEnabled) {
+        shootSound.volume = volume;
         shootSound.play();
       }
     } else if (event.code == 'KeyG') {
@@ -554,15 +567,25 @@ function handleGameOver() {
 
 
 function onSettingsChange() {
-  // console.log(document.getElementById('enable-sound').checked);
+
   backgroundColor = document.getElementById('background-color').value;
   shipInnerColor = document.getElementById('ship-inner-color').value;
   shipOuterColor = document.getElementById('ship-outer-color').value;
   projectileColor = document.getElementById('projectile-color').value;
   asteroidColor = document.getElementById('asteroid-color').value;
+  lvlUpTextAnimation = document.getElementById('enable-lvl-up-text-animation').checked;
+  lvlUpFlashAnimation = document.getElementById('enable-lvl-up-flash-animation').checked;
   soundEnabled = document.getElementById('enable-sound').checked;
-  soundEnabled = document.getElementById('enable-lvl-up-animations').checked;
-  console.log(soundEnabled)
+  volume = document.getElementById('volume').value / 100;
+
+  if (!soundEnabled) {
+    document.getElementById('volume').disabled = true;
+  } else {
+    document.getElementById('volume').disabled = false;
+  }
+
+  console.log(volume);
+
 }
 
 function resetSettings() {
@@ -572,8 +595,11 @@ function resetSettings() {
   document.getElementById('ship-inner-color').value = 'cyan';
   document.getElementById('projectile-color').value = 'white';
   document.getElementById('asteroid-color').value = 'white';
+  document.getElementById('enable-lvl-up-text-animation').checked = true;
+  document.getElementById('enable-lvl-up-flash-animation').checked = true;
   document.getElementById('enable-sound').checked = true;
-  document.getElementById('enable-lvl-up-animations').checked = true;
+  document.getElementById('volume').value = 100;
+  document.getElementById('volume').disabled = false;
 
   backgroundColor = 'black';
   shipOuterColor = 'white';
@@ -581,24 +607,47 @@ function resetSettings() {
   projectileColor = 'white';
   asteroidColor = 'white';
   soundEnabled = true;
-  lvlUpAnimations = true;
+  lvlUpTextAnimation = true;
+  lvlUpFlashAnimation = true;
 }
+
+// function displayGame() {
+//   document.getElementById('settings').style.display = 'none';
+//   document.getElementById('asteroids-canvas').style.display = 'initial';
+//   if (gameOver) {
+//     toggleMenuButtons('game over');
+//   } else {
+//     toggleMenuButtons('pause');
+//   }
+// }
+
+// function displaySettings() {
+//   document.getElementById('asteroids-canvas').style.display = 'none';
+//   document.getElementById('settings').style.display = 'initial';
+//   toggleMenuButtons('settings');
+// }
 
 function displayGame() {
   document.getElementById('settings').style.display = 'none';
+  document.getElementById('score-zone').style.display = 'flex';
   document.getElementById('asteroids-canvas').style.display = 'initial';
+
   if (gameOver) {
     toggleMenuButtons('game over');
   } else {
     toggleMenuButtons('pause');
   }
+
 }
 
 function displaySettings() {
   document.getElementById('asteroids-canvas').style.display = 'none';
+  document.getElementById('score-zone').style.display = 'none';
   document.getElementById('settings').style.display = 'initial';
   toggleMenuButtons('settings');
 }
+
+
 
 function resumeGame() {
   animate();
