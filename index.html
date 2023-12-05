@@ -17,19 +17,122 @@
 <body>
 
   <div id='asteroids-container'>
-    <!-- <canvas></canvas> -->
     <div>
 
       <div id='score-zone'>
-        <div id='scores'>
-          <!-- <p id='high-score'>High score: 0</p>
-          <p id='current-score'>Current score: 0</p> -->
-          <p>High score: <span id='high-score'>0</span></p>
-          <p>Current score: <span id='current-score'>0</span></p>
-          <p>Level: <span id='level'>1</span></p>
-        </div>
+
+          <div id='scores'>
+            <p>High score: <span id='high-score'>0</span></p>
+            <p>Current score: <span id='current-score'>0</span></p>
+            <p>Level: <span id='level'>1</span></p>
+          </div>
+          <div id='gif-container'>
+            <img id='level-up-gif' src='level_up_gif.gif' alt='level_up'>
+          </div>
+          <div id='ghost-container'>
+            <button id='start-btn' onclick='startNewGame()'>Start Game</button>
+            <button id='resume-btn' onclick='resumeGame()'>Resume</button>
+            <button id='settings-btn' onclick='displaySettings()'>Settings</button>
+            <button id='pause-btn' onclick='pauseGame()'>Pause</button>
+          </div>
       </div>
-      <canvas width='600' height='600'></canvas>
+
+      <canvas id='asteroids-canvas' width='600' height='600'></canvas>
+
+      <div id='settings'>
+        <h2 class='text-center'>Settings</h2>
+
+        <div class='settings-input-group'>
+          <label for='background-color'>Background color:</label>
+          <select name='background-color' id='background-color' onchange='onSettingsChange()'>
+            <option value='black'>Black</option>
+            <option value='white'>White</option>
+            <option value='blue'>Blue</option>
+            <option value='green'>Green</option>
+            <option value='red'>Red</option>
+            <option value='purple'>Purple</option>
+            <option value='pink'>Pink</option>
+            <option value='cyan'>Cyan</option>
+          </select>
+        </div>
+        
+        <div class='settings-input-group'>
+          <label for='ship-outer-color'>Ship outer color:</label>
+          <select name='ship-outer-color' id='ship-outer-color' onchange='onSettingsChange()'>
+            <option value='black'>Black</option>
+            <option value='white' selected>White</option>
+            <option value='blue'>Blue</option>
+            <option value='green'>Green</option>
+            <option value='red'>Red</option>
+            <option value='purple'>Purple</option>
+            <option value='pink'>Pink</option>
+            <option value='cyan'>Cyan</option>
+          </select>
+        </div>
+        
+        <div class='settings-input-group'>
+          <label for='ship-inner-color'>Ship inner color:</label>
+          <select name='ship-inner-color' id='ship-inner-color' onchange='onSettingsChange()'>
+            <option value='black'>Black</option>
+            <option value='white'>White</option>
+            <option value='blue'>Blue</option>
+            <option value='green'>Green</option>
+            <option value='red'>Red</option>
+            <option value='purple'>Purple</option>
+            <option value='pink'>Pink</option>
+            <option value='cyan' selected>Cyan</option>
+          </select>
+        </div>
+
+        <div class='settings-input-group'>
+          <label for='projectile-color'>Projectile color:</label>
+          <select name='projectile-color' id='projectile-color' onchange='onSettingsChange()'>
+            <option value='black'>Black</option>
+            <option value='white' selected>White</option>
+            <option value='blue'>Blue</option>
+            <option value='green'>Green</option>
+            <option value='red'>Red</option>
+            <option value='purple'>Purple</option>
+            <option value='pink'>Pink</option>
+            <option value='cyan'>Cyan</option>
+          </select>
+        </div>
+        
+        <div class='settings-input-group'>
+          <label for='asteroid-color'>Asteroid color:</label>
+          <select name='asteroid-color' id='asteroid-color' onchange='onSettingsChange()'>
+            <option value='black'>Black</option>
+            <option value='white' selected>White</option>
+            <option value='blue'>Blue</option>
+            <option value='green'>Green</option>
+            <option value='red'>Red</option>
+            <option value='purple'>Purple</option>
+            <option value='pink'>Pink</option>
+            <option value='cyan'>Cyan</option>
+          </select>
+        </div>
+
+        <div class='settings-input-group'>
+          <label for='enable-sound'>Enable sound:</label>
+          <input type='checkbox' id='enable-sound' name='enable-sound' checked onchange='onSettingsChange()'>
+        </div>
+
+        <div class='settings-input-group'>
+          <label for='enable-lvl-up-animations'>Enable level-up animations:</label>
+          <input type='checkbox' id='enable-lvl-up-animations' name='enable-lvl-up-animations' checked onchange='onSettingsChange()'>
+        </div>
+
+
+
+        <div class='text-center'>
+          <button id='back-to-game-btn' onclick='displayGame()'>Back to game</button>
+          <button id='reset-to-default-btn' onclick='resetSettings()'>Reset to default</button>
+        </div>
+
+        <div class='text-center'>
+        </div>
+
+      </div>
     </div>
   </div>
 

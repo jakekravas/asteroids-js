@@ -1,15 +1,106 @@
+/*
+Jake Kravas
+this file is responsible for the game's functionality,
+such as moving the player's ship, shooting projectiles,
+spawning asteroids, handling collisions, and handling scoring
+*/
+
 const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d');
 let levelUpSound = new Audio('audio/level_up.m4a')
+let gameInPlay = false;
+let gameOver = true;
 let score = 0;
 let level = 1;
 
-// let shootSound = new Audio('audio/shoot.mp3');s
+let currentFps;
+let desiredFps = 60;
+let speedAdjustment;
+let backgroundColor = 'black';
+let shipOuterColor = 'white';
+let shipInnerColor = 'cyan';
+let projectileColor = 'white';
+let asteroidColor = 'white';
+let soundEnabled = true;
+let lvlUpAnimations = true;
 
-// canvas.width = window.innerWidth;
-// canvas.height = window.innerHeight;
-// canvas.width = document.getElementById('asteroids-container').width;
-// canvas.height = document.getElementById('asteroids-container').height;
+const SPEED = 4;
+const ROTATIONAL_SPEED = 0.1;
+const FRICTION = 0
+const PROJECTILE_SPEED = 7;
+let asteroidSpawnInterval = 1000;
+
+let projectiles = [];
+let asteroids = [];
+let asteroidIntervalId;
+
+let asteroidVelocity = 1;
+
+const startButton = document.getElementById('start-btn');
+const settingsButton = document.getElementById('settings-btn');
+const pauseButton = document.getElementById('pause-btn');
+const resumeButton = document.getElementById('resume-btn');
+
+// startButton.addEventListener('click', function() {
+//     // c.fillStyle = backgroundColor;
+//     // c.fillRect(0, 0, canvas.width, canvas.height); // x, y, width, height
+//     if (!gameOver) {
+//       startButton.blur()
+//       gameInPlay = true;
+//       animate();
+//       spawnAsteroids();
+
+//       document.getElementById('start-btn').style.display = 'none';
+//       document.getElementById('settings-btn').style.display = 'none';
+//       document.getElementById('pause-btn').style.display = 'initial';
+//       document.getElementById('resume-btn').style.display = 'none';
+//     }
+// });
+
+function startNewGame() {
+    gameOver = false;
+    projectiles = [];
+    asteroids = [];
+    score = 0;
+    level = 1;
+    asteroidVelocity = 1;
+
+    player.position.x = canvas.width / 2;
+    player.position.y = canvas.height / 2;
+
+
+    startButton.blur()
+    gameInPlay = true;
+    animate();
+    spawnAsteroids();
+
+    document.getElementById('current-score').innerText = 0;
+    document.getElementById('level').innerText = 1;
+
+    toggleMenuButtons('play')
+    // document.getElementById('start-btn').style.display = 'none';
+    // document.getElementById('settings-btn').style.display = 'none';
+    // document.getElementById('resume-btn').style.display = 'none';
+    // document.getElementById('pause-btn').style.display = 'initial';
+
+}
+
+
+// get framerate of user's device (needed)
+const getFPS = () =>
+  new Promise(resolve =>
+    requestAnimationFrame(t1 =>
+      requestAnimationFrame(t2 => resolve(1000 / (t2 - t1)))
+    )
+  )
+
+// Calling the function to get the FPS
+getFPS().then(fps => {
+  // console.log(fps)
+  currentFps = Math.round(fps);
+  speedAdjustment = desiredFps / currentFps;
+  // console.log(speedAdjustment)
+});
 
 const gameOverSound = new Audio('audio/game-over.mp3')
 
@@ -31,7 +122,7 @@ class Player {
 
     c.beginPath();
     c.arc(this.position.x, this.position.y, 5, 0, Math.PI * 2, false);
-    c.fillStyle = 'cyan';
+    c.fillStyle = shipInnerColor;
     c.fill()
     c.closePath();
 
@@ -42,7 +133,7 @@ class Player {
     c.lineTo(this.position.x - 10, this.position.y + 10); 
     c.closePath();
 
-    c.strokeStyle = 'white';
+    c.strokeStyle = shipOuterColor;
     c.stroke();
     c.restore();
   }
@@ -76,8 +167,6 @@ class Player {
 }
 
 function triangleCircleCollision(triangleVertices, circle) {
-  // console.log('TCC')
-  // console.log(triangleVertices)
 
   for (let i = 0; i < triangleVertices.length; i++) {
     let xDifference = circle.position.x - triangleVertices[i].x;
@@ -87,9 +176,12 @@ function triangleCircleCollision(triangleVertices, circle) {
     let distance = Math.sqrt((xDifference * xDifference) + (yDifference * yDifference));
 
     // if distance <= sum of both radiuses, they must be touching
-    if (distance <= circle.radius) {
+    // if (distance <= circle.radius) {
+    if (distance < circle.radius) {
       console.log('SHIP HAS BEEN HIT')
-      gameOverSound.play();
+      if (soundEnabled) {
+        gameOverSound.play();
+      }
       return true;
     }
   }
@@ -110,7 +202,8 @@ class Projectile {
     c.beginPath()
     c.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2, false)
     c.closePath()
-    c.fillStyle = 'white'
+    // c.fillStyle = 'white'
+    c.fillStyle = projectileColor
     c.fill()
   }
 
@@ -134,7 +227,8 @@ class Asteroid {
     c.beginPath()
     c.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2, false)
     c.closePath()
-    c.strokeStyle = 'white'
+    // c.strokeStyle = 'white'
+    c.strokeStyle = asteroidColor
     c.stroke()
   }
 
@@ -165,89 +259,66 @@ const keys = {
   },
 }
 
-// const SPEED = 3;
-// const ROTATIONAL_SPEED = 0.05;
-// const FRICTION = 0.97
-// const PROJECTILE_SPEED = 3;
+// let asteroidVelocityLowerRange = 1;
+// let asteroidVelocityUpperRange = 2;
 
-const SPEED = 4;
-const ROTATIONAL_SPEED = 0.1;
-const FRICTION = 0
-const PROJECTILE_SPEED = 7;
-// const ASTEROID_SPEED = 4;
-let ASTEROID_SPAWN_INTERVAL = 1000;
+function spawnAsteroids() {
+  // spawn asteroids
+  // const asteroidIntervalId = window.setInterval(() => {
+  asteroidIntervalId = window.setInterval(() => {
+    const randomDirection = Math.floor(Math.random() * 4); // random # 0-3
+  
+    let x, y;
+    let vx, vy; //vel x, vel y
+    let randomRadius = 50 * Math.random() + 10
+  
+    // make asteroid come in from left/right/top/bottom based on randomDirection
+    switch (randomDirection) {
+      case 0: // left side of screen
+        x = 0 - randomRadius;
+        y = Math.random() * canvas.height;
+        vx = asteroidVelocity * speedAdjustment;
+        vy = 0;
+        break;
+      case 1: // bottom of screen
+        x = Math.random() * canvas.width;
+        y = canvas.height + randomRadius;
+        vx = 0;
+        vy = -asteroidVelocity * speedAdjustment;
+        break;
+      case 2: // right side of screen
+        x = canvas.width + randomRadius;
+        y = Math.random() * canvas.height;
+        vx = -asteroidVelocity * speedAdjustment;
+        vy = 0;
+        break;
+      case 3: // top of screen
+        x = Math.random() * canvas.width;
+        y = 0 - randomRadius;
+        vx = 0;
+        vy = asteroidVelocity * speedAdjustment;
+        break;
+    }
+  
+    asteroids.push(new Asteroid({
+      position: {
+        x: x,
+        y: y,
+      },
+      velocity: {
+        x: vx,
+        y: vy
+      },
+      // radius
+      radius: randomRadius
+    }));
+    console.log('NEW ASTEROID')
+  
+    // console.log(asteroids)
+  }, asteroidSpawnInterval);
+}
 
-// const projectiles = [];
-// const asteroids = [];
-let projectiles = [];
-let asteroids = [];
 
-// let asteroidVelocity = 1;
-let asteroidVelocityLowerRange = 1;
-let asteroidVelocityUpperRange = 2;
-
-// spawn new asteroid every 3 seconds
-// window.setInterval(() => {
-const intervalId = window.setInterval(() => {
-  const randomDirection = Math.floor(Math.random() * 4); // random # 0-3
-
-  // if (score >= 2) {
-  //   asteroidVelocity = 6;
-  // } else {
-  //   asteroidVelocity = 2;
-  // }
-
-  // const asteroidVelocity = Math.floor(Math.random() * 5) + 2; // random # 2-6
-  const asteroidVelocity = Math.floor(Math.random() * (asteroidVelocityUpperRange - 1)) + asteroidVelocityLowerRange;
-
-  let x, y;
-  let vx, vy; //vel x, vel y
-  let randomRadius = 50 * Math.random() + 10
-
-  // make asteroid come in from left/right/top/bottom based on randomDirection
-  switch (randomDirection) {
-    case 0: // left side of screen
-      x = 0 - randomRadius;
-      y = Math.random() * canvas.height;
-      vx = asteroidVelocity;
-      vy = 0;
-      break;
-    case 1: // bottom of screen
-      x = Math.random() * canvas.width;
-      y = canvas.height + randomRadius;
-      vx = 0;
-      vy = -asteroidVelocity;
-      break;
-    case 2: // right side of screen
-      x = canvas.width + randomRadius;
-      y = Math.random() * canvas.height;
-      vx = -asteroidVelocity;
-      vy = 0;
-      break;
-    case 3: // top of screen
-      x = Math.random() * canvas.width;
-      y = 0 - randomRadius;
-      vx = 0;
-      vy = asteroidVelocity;
-      break;
-  }
-
-  asteroids.push(new Asteroid({
-    position: {
-      x: x,
-      y: y,
-    },
-    velocity: {
-      x: vx,
-      y: vy
-    },
-    // radius
-    radius: randomRadius
-  }));
-  console.log('NEW ASTEROID')
-
-  // console.log(asteroids)
-}, ASTEROID_SPAWN_INTERVAL);
 
 
 // returns true/false of whether two circles are touching
@@ -260,37 +331,62 @@ function circleCollision(circle1, circle2) {
 
   // if distance <= sum of both radiuses, they must be touching
   if (distance <= circle1.radius + circle2.radius) {
-    console.log('two have collided')
+
     let hitSound = new Audio('audio/hit.m4a')
-    hitSound.play()
+    if (soundEnabled) {
+      hitSound.play()
+    }
     score++;
     document.getElementById('current-score').innerText = score;
-    // if (score == 2) {
-    if (score % 10 == 0) { // level up
-      console.log('CLEAR ASTEROIDS')
-      asteroids = [];
-      level++;
-      levelUpSound.play()
-      // asteroidVelocity++;
-      asteroidVelocityLowerRange++;
-      asteroidVelocityUpperRange++;
-      document.getElementById('level').innerText = level;
-      // clearInterval(intervalId)
+
+    // level up
+    if (score % 2 == 0) {
+      handleLevelUp();
     }
-
+    
     return true;
-  }
-
-  return false;
+    }
+    return false;
 }
 
-// function getPlayerVertices() {
-//   let vertice1 = {  }
-// }
+function handleLevelUp() {
+  asteroids = [];
+  level++;
+
+  if (soundEnabled) {
+    levelUpSound.play()
+  }
+
+  asteroidVelocity++;
+  // asteroidVelocityLowerRange++;
+  // asteroidVelocityUpperRange++;
+
+  document.getElementById('level').innerText = level;
+
+  let body = document.querySelector('body');
+  body.style.animation = 'flashAnimation 1s ease';
+
+  // Remove the animation property after it's complete
+  setTimeout(function() {
+    body.style.animation = '';
+  }, 1000);
+
+  let gif = document.getElementById('level-up-gif');
+  gif.style.marginBottom = '0';
+
+  // Remove the animation property after it's complete
+  setTimeout(function() {
+    gif.style.marginBottom = '-80px';
+  }, 2000);
+}
+
+let animationId;
 
 function animate() {
-  const animationId = window.requestAnimationFrame(animate);
-  c.fillStyle = 'black';
+  // const animationId = window.requestAnimationFrame(animate);
+  animationId = window.requestAnimationFrame(animate);
+  // c.fillStyle = 'black';
+  c.fillStyle = backgroundColor;
   c.fillRect(0, 0, canvas.width, canvas.height); // x, y, width, height
   
   player.update();
@@ -316,9 +412,7 @@ function animate() {
     
 
     if (triangleCircleCollision(player.getVertices(), asteroid)) {
-      console.log('GAME OVER')
-      window.cancelAnimationFrame(animationId)
-      clearInterval(intervalId)
+      handleGameOver();
     }
 
     // if projectile is off screen, remove it from array
@@ -370,8 +464,8 @@ function animate() {
   if (keys.w.pressed) {
 
     // forward speed
-    player.velocity.x = Math.cos(player.rotation) * SPEED;
-    player.velocity.y = Math.sin(player.rotation) * SPEED;
+    player.velocity.x = Math.cos(player.rotation) * SPEED * speedAdjustment;
+    player.velocity.y = Math.sin(player.rotation) * SPEED * speedAdjustment;
 
   // if accelerate key is released, decelerate ship
   } else if (!keys.w.pressed) {
@@ -380,49 +474,54 @@ function animate() {
   }
 
   // rotate speed
-  if (keys.d.pressed) player.rotation += ROTATIONAL_SPEED;
-  else if (keys.a.pressed) player.rotation -= ROTATIONAL_SPEED;
+  if (keys.d.pressed) player.rotation += ROTATIONAL_SPEED * speedAdjustment;
+  else if (keys.a.pressed) player.rotation -= ROTATIONAL_SPEED * speedAdjustment;
 
 
 }
 
-animate();
+// animate();
 
 window.addEventListener('keydown', event => {
-  // console.log(event.code)
 
-
-  // move player's ship up/left/right
-  if (event.code == 'KeyW' || event.code == 'ArrowUp') {
-    event.preventDefault() // prevent automatic scroll-down
-    keys.w.pressed = true;
-  } else if (event.code == 'KeyA' || event.code == 'ArrowLeft') {
-    event.preventDefault() // prevent automatic scroll-down
-    keys.a.pressed = true;
-  } else if (event.code == 'KeyD' || event.code == 'ArrowRight') {
-    event.preventDefault() // prevent automatic scroll-down
-    keys.d.pressed = true;
-  } else if (event.code == 'Space') {
-    event.preventDefault() // prevent automatic scroll-down
-    const shootSound = new Audio('audio/shoot.mp3');
-    // const shootSound = new Audio('audio/shoott.m4a');
-    shootSound.pause();
-
-    projectiles.push(new Projectile({
-      position: {
-        x: player.position.x + Math.cos(player.rotation) * 30,
-        y: player.position.y + Math.sin(player.rotation) * 30,
-      },
-      velocity: {
-        x: Math.cos(player.rotation) * PROJECTILE_SPEED,
-        y: Math.sin(player.rotation) * PROJECTILE_SPEED
+  if (gameInPlay) {
+    // console.log(event.code)
+  
+  
+    // move player's ship up/left/right
+    if (event.code == 'KeyW' || event.code == 'ArrowUp') {
+      event.preventDefault() // prevent automatic scroll-down
+      keys.w.pressed = true;
+    } else if (event.code == 'KeyA' || event.code == 'ArrowLeft') {
+      event.preventDefault() // prevent automatic scroll-down
+      keys.a.pressed = true;
+    } else if (event.code == 'KeyD' || event.code == 'ArrowRight') {
+      event.preventDefault() // prevent automatic scroll-down
+      keys.d.pressed = true;
+    } else if (event.code == 'Space') {
+      event.preventDefault() // prevent automatic scroll-down
+      const shootSound = new Audio('audio/shoot.mp3');
+      // const shootSound = new Audio('audio/shoott.m4a');
+      shootSound.pause();
+  
+      projectiles.push(new Projectile({
+        position: {
+          x: player.position.x + Math.cos(player.rotation) * 30,
+          y: player.position.y + Math.sin(player.rotation) * 30,
+        },
+        velocity: {
+          x: Math.cos(player.rotation) * PROJECTILE_SPEED * speedAdjustment,
+          y: Math.sin(player.rotation) * PROJECTILE_SPEED * speedAdjustment
+        }
+      }));
+  
+      if (soundEnabled) {
+        shootSound.play();
       }
-    }));
-
-    shootSound.play();
-  } else if (event.code == 'KeyG') {
-    console.log(player.getVertices())
-    // console.log(player);
+    } else if (event.code == 'KeyG') {
+      console.log(player.getVertices())
+      // console.log(player);
+    }
   }
 
 });
@@ -439,5 +538,110 @@ window.addEventListener('keyup', event => {
     keys.d.pressed = false;
     
   }
-
 });
+
+
+function handleGameOver() {
+  console.log('GAME OVER');
+  window.cancelAnimationFrame(animationId);
+  clearInterval(asteroidIntervalId);
+  gameInPlay = false;
+  gameOver = true;
+  // gameOver = true;
+  toggleMenuButtons('game over');
+}
+
+
+
+function onSettingsChange() {
+  // console.log(document.getElementById('enable-sound').checked);
+  backgroundColor = document.getElementById('background-color').value;
+  shipInnerColor = document.getElementById('ship-inner-color').value;
+  shipOuterColor = document.getElementById('ship-outer-color').value;
+  projectileColor = document.getElementById('projectile-color').value;
+  asteroidColor = document.getElementById('asteroid-color').value;
+  soundEnabled = document.getElementById('enable-sound').checked;
+  soundEnabled = document.getElementById('enable-lvl-up-animations').checked;
+  console.log(soundEnabled)
+}
+
+function resetSettings() {
+
+  document.getElementById('background-color').value = 'black';
+  document.getElementById('ship-outer-color').value = 'white';
+  document.getElementById('ship-inner-color').value = 'cyan';
+  document.getElementById('projectile-color').value = 'white';
+  document.getElementById('asteroid-color').value = 'white';
+  document.getElementById('enable-sound').checked = true;
+  document.getElementById('enable-lvl-up-animations').checked = true;
+
+  backgroundColor = 'black';
+  shipOuterColor = 'white';
+  shipInnerColor = 'cyan';
+  projectileColor = 'white';
+  asteroidColor = 'white';
+  soundEnabled = true;
+  lvlUpAnimations = true;
+}
+
+function displayGame() {
+  document.getElementById('settings').style.display = 'none';
+  document.getElementById('asteroids-canvas').style.display = 'initial';
+  if (gameOver) {
+    toggleMenuButtons('game over');
+  } else {
+    toggleMenuButtons('pause');
+  }
+}
+
+function displaySettings() {
+  document.getElementById('asteroids-canvas').style.display = 'none';
+  document.getElementById('settings').style.display = 'initial';
+  toggleMenuButtons('settings');
+}
+
+function resumeGame() {
+  animate();
+  spawnAsteroids();
+  gameInPlay = true;
+  
+  toggleMenuButtons('play');
+}
+
+function pauseGame() {
+  window.cancelAnimationFrame(animationId)
+  clearInterval(asteroidIntervalId)
+  gameInPlay = false;
+
+  toggleMenuButtons('pause');
+
+}
+
+function toggleMenuButtons(view) {
+  if (view == 'play') {
+    console.log('ASDFAs')
+    // document.getElementById('start-btn').style.display = 'none';
+    startButton.style.display = 'none';
+    // document.getElementById('settings-btn').style.display = 'none';
+    settingsButton.style.display = 'none';
+    // document.getElementById('pause-btn').style.display = 'initial';
+    pauseButton.style.display = 'initial';
+    // document.getElementById('resume-btn').style.display = 'none';
+    resumeButton.style.display = 'none';
+  } else if (view == 'pause') {
+    document.getElementById('start-btn').style.display = 'none';
+    document.getElementById('pause-btn').style.display = 'none';
+    document.getElementById('settings-btn').style.display = 'initial';
+    document.getElementById('resume-btn').style.display = 'initial';
+  } else if (view == 'game over') {
+    document.getElementById('pause-btn').style.display = 'none';
+    document.getElementById('resume-btn').style.display = 'none';
+    document.getElementById('start-btn').style.display = 'initial';
+    document.getElementById('settings-btn').style.display = 'initial';
+  } else if (view == 'settings') {
+    document.getElementById('start-btn').style.display = 'none';
+    document.getElementById('pause-btn').style.display = 'none';
+    document.getElementById('settings-btn').style.display = 'none';
+    document.getElementById('resume-btn').style.display = 'none';
+  }
+}
